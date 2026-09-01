@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>旅遊景點候選清單</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#F6F1E2; --ink:#23301F; --ink-soft:#5B6650;
+    --forest:#2E5C42; --forest-deep:#1F4732; --gold:#D69A32;
+    --coral:#C85A3A; --teal:#3D7A80; --line:#D8CDAE; --white:#FFFDF7;
+    --bad:#B04A3B; --good:#2E5C42;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--cream);color:var(--ink);font-family:"Work Sans",sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;}
+  h1,h2,h3,.display{font-family:"Fraunces",serif;font-weight:600;color:var(--forest-deep);margin:0;}
+  a{color:var(--teal);}
+  button{font-family:inherit;cursor:pointer;}
+  input,textarea,select{font-family:inherit;font-size:14px;}
+  .wrap{max-width:960px;margin:0 auto;padding:0 20px 80px;}
+  .hidden{display:none !important;}
+
+  header{padding:36px 0 20px;border-bottom:1px solid var(--line);}
+  header h1{font-size:clamp(28px,5vw,40px);}
+  .header-row{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;}
+  .header-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px;}
+  .me{font-size:12.5px;color:var(--ink-soft);display:flex;align-items:center;gap:6px;}
+  .me input{border:1px solid var(--line);border-radius:20px;padding:5px 12px;background:var(--white);width:120px;}
+  .admin-toggle{font-size:12px;color:var(--ink-soft);background:none;border:1px solid var(--line);border-radius:20px;padding:4px 12px;}
+  .admin-toggle.on{color:var(--white);background:var(--forest);border-color:var(--forest);}
+  .admin-login{display:flex;gap:6px;align-items:center;}
+  .admin-login input{border:1px solid var(--line);border-radius:20px;padding:5px 12px;background:var(--white);width:110px;font-size:13px;}
+  .admin-login .btn{padding:6px 12px;font-size:12.5px;}
+
+  .tabs{display:flex;gap:4px;margin-top:22px;flex-wrap:wrap;}
+  .tab{padding:9px 16px;border-radius:20px;border:1px solid var(--line);background:var(--white);color:var(--ink-soft);font-size:13.5px;font-weight:600;}
+  .tab.active{background:var(--forest);color:var(--white);border-color:var(--forest);}
+
+  .panel{display:none;padding-top:28px;}
+  .panel.active{display:block;}
+
+  .card-box{background:var(--white);border:1px solid var(--line);border-left:5px solid var(--forest);padding:22px 24px;border-radius:2px;}
+  .field-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 20px;margin-top:14px;}
+  .field{display:flex;flex-direction:column;gap:5px;}
+  .field.full{grid-column:1/-1;}
+  .field label{font-size:12px;font-weight:600;color:var(--forest);}
+  .field .hint{font-size:11px;color:var(--ink-soft);font-weight:400;}
+  .field input,.field textarea,.field select{border:1px solid var(--line);border-radius:4px;padding:8px 10px;background:var(--cream);}
+  .field textarea{resize:vertical;min-height:60px;}
+  .unit-input{display:flex;align-items:center;gap:6px;}
+  .unit-input input{width:80px;}
+  @media(max-width:600px){.field-grid{grid-template-columns:1fr;}}
+  .btn{display:inline-flex;align-items:center;gap:6px;border:none;border-radius:20px;padding:9px 18px;font-size:13.5px;font-weight:600;}
+  .btn-primary{background:var(--forest);color:var(--white);}
+  .btn-ghost{background:transparent;border:1px solid var(--line);color:var(--ink-soft);}
+  .btn-danger{background:transparent;border:1px solid #E8CFC0;color:var(--bad);}
+  .btn:disabled{opacity:0.5;cursor:default;}
+  .save-row{margin-top:16px;display:flex;align-items:center;gap:10px;}
+  .save-msg{font-size:12.5px;color:var(--forest);}
+
+  .subtabs{display:flex;gap:8px;margin-top:18px;}
+  .subtab{padding:7px 16px;border-radius:20px;border:1px solid var(--line);background:var(--cream);color:var(--ink-soft);font-size:13px;font-weight:600;}
+  .subtab.active{background:var(--gold);color:var(--white);border-color:var(--gold);}
+
+  .list-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:16px;}
+  .list-toolbar p{color:var(--ink-soft);font-size:13px;margin:0;}
+  .sort-wrap{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);}
+  .sort-wrap select{border:1px solid var(--line);border-radius:4px;padding:6px 8px;background:var(--white);}
+  .sort-dir{background:var(--white);border:1px solid var(--line);border-radius:4px;padding:6px 9px;font-size:13px;color:var(--ink-soft);}
+
+  .cards{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:18px;}
+  @media(max-width:680px){.cards{grid-template-columns:1fr;}}
+  .spot{background:var(--white);border:1px solid var(--line);border-radius:4px;overflow:hidden;display:flex;flex-direction:column;}
+  .spot .photo{width:100%;height:150px;background:linear-gradient(135deg,#E7DFC7,#D8CDAE);display:flex;align-items:center;justify-content:center;color:var(--ink-soft);font-size:13px;overflow:hidden;position:relative;}
+  .spot .photo img{width:100%;height:100%;object-fit:cover;}
+  .spot .photo.clickable{cursor:zoom-in;}
+  .spot .photo .count-badge{position:absolute;bottom:6px;right:6px;background:rgba(20,20,15,0.6);color:#fff;font-size:11px;padding:2px 8px;border-radius:20px;display:flex;align-items:center;gap:4px;}
+
+  .lightbox{position:fixed;inset:0;background:rgba(15,18,12,0.92);display:none;align-items:center;justify-content:center;z-index:80;}
+  .lightbox.active{display:flex;}
+  .lightbox img{max-width:88vw;max-height:80vh;object-fit:contain;border-radius:2px;}
+  .lightbox .lb-close{position:absolute;top:18px;right:22px;background:none;border:none;color:#fff;font-size:28px;line-height:1;padding:6px;}
+  .lightbox .lb-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.12);border:none;color:#fff;font-size:26px;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;}
+  .lightbox .lb-prev{left:16px;}
+  .lightbox .lb-next{right:16px;}
+  .lightbox .lb-counter{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);color:#fff;font-size:13px;opacity:0.85;}
+  .spot .body{padding:16px 18px 18px;flex:1;display:flex;flex-direction:column;}
+  .spot h4{font-size:18px;}
+  .spot .addr{font-size:12px;color:var(--ink-soft);margin:3px 0 8px;}
+  .spot .blurb{font-size:13.5px;white-space:pre-line;flex:1;}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;}
+  .chip{font-size:11.5px;padding:3px 9px;border-radius:20px;border:1px solid var(--line);color:var(--ink-soft);white-space:nowrap;background:var(--cream);}
+  .chip.price{color:var(--coral);border-color:#E8CFC0;background:#FBF2ED;}
+  .chip.time{color:var(--forest);border-color:#CBDDCF;background:#F0F6F1;}
+  .chip.drive{color:var(--teal);border-color:#CBE0E1;background:#EFF6F6;}
+  .chip.indoor{color:#7B5FA0;border-color:#DCD2EA;background:#F4F0F9;}
+  .links-row{display:flex;gap:14px;margin-top:10px;font-size:12.5px;}
+  .links-row a{display:flex;align-items:center;gap:4px;text-decoration:none;}
+  .links-row svg{width:14px;height:14px;}
+
+  .vote-row{display:flex;align-items:center;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid var(--line);}
+  .vote-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;border:1px solid var(--line);border-radius:6px;padding:7px 4px;background:var(--white);font-size:12px;color:var(--ink-soft);}
+  .vote-btn .n{font-family:"Fraunces",serif;font-size:16px;font-weight:600;color:var(--ink);}
+  .vote-btn.yes.selected{background:#EEF5EF;border-color:var(--good);color:var(--good);}
+  .vote-btn.yes.selected .n{color:var(--good);}
+  .vote-btn.no.selected{background:#FBEFEC;border-color:var(--bad);color:var(--bad);}
+  .vote-btn.no.selected .n{color:var(--bad);}
+  .vote-btn.neutral.selected{background:#FBF3E4;border-color:var(--gold);color:var(--gold);}
+  .vote-btn.neutral.selected .n{color:var(--gold);}
+  .card-tools{display:flex;justify-content:flex-end;gap:8px;margin-top:10px;}
+  .icon-btn{background:none;border:none;color:var(--ink-soft);font-size:12px;padding:2px 4px;}
+  .icon-btn:hover{color:var(--forest);}
+
+  .overlay{position:fixed;inset:0;background:rgba(30,35,25,0.4);display:none;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto;z-index:50;}
+  .overlay.active{display:flex;}
+  .modal{background:var(--white);border-radius:6px;max-width:600px;width:100%;padding:26px 28px 24px;}
+  .modal h3{font-size:20px;margin-bottom:16px;}
+  .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;}
+  .photo-upload{display:flex;align-items:center;gap:10px;}
+  .photo-upload .preview{width:56px;height:56px;border-radius:4px;background:var(--cream);border:1px solid var(--line);overflow:hidden;flex:none;}
+  .photo-upload .preview img{width:100%;height:100%;object-fit:cover;}
+  .photo-list{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;}
+  .photo-list .thumb{position:relative;width:64px;height:64px;border-radius:4px;overflow:hidden;border:1px solid var(--line);flex:none;}
+  .photo-list .thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+  .photo-list .thumb .rm{position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(20,20,15,0.65);color:#fff;border:none;font-size:12px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;}
+  .photo-add-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .photo-add-row input[type="url"]{flex:1;min-width:160px;border:1px solid var(--line);border-radius:4px;padding:8px 10px;background:var(--cream);}
+  .photo-add-row input[type="file"]{font-size:12.5px;max-width:180px;}
+  .type-pick{display:flex;gap:8px;}
+  .type-pick button{flex:1;border:1px solid var(--line);background:var(--cream);border-radius:4px;padding:8px;font-size:13.5px;color:var(--ink-soft);font-weight:600;}
+  .type-pick button.active{background:var(--forest);color:var(--white);border-color:var(--forest);}
+
+  .empty{color:var(--ink-soft);font-size:14px;margin-top:24px;text-align:center;padding:40px 0;border:1px dashed var(--line);border-radius:6px;}
+
+  .stat-row{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--line);}
+  .stat-row:last-child{border-bottom:none;}
+  .stat-name{flex:1;min-width:0;}
+  .stat-name h4{font-size:15.5px;}
+  .stat-name .who{font-size:11.5px;color:var(--ink-soft);margin-top:2px;}
+  .bar-wrap{width:130px;height:8px;background:var(--line);border-radius:6px;overflow:hidden;flex:none;display:flex;}
+  .bar-yes{background:var(--good);height:100%;}
+  .bar-neutral{background:var(--gold);height:100%;}
+  .bar-no{background:var(--bad);height:100%;}
+  .stat-score{width:64px;text-align:right;font-family:"Fraunces",serif;font-weight:600;flex:none;}
+  .stat-group-label{font-size:12px;font-weight:600;color:var(--forest);margin:18px 0 4px;}
+  .stat-group-label:first-child{margin-top:0;}
+
+  .danger-zone{margin-top:36px;border-top:1px solid var(--line);padding-top:20px;}
+  .danger-zone h3{font-size:15px;color:var(--bad);}
+  .danger-zone p{font-size:13px;color:var(--ink-soft);margin:6px 0 12px;}
+
+  .loading{padding:60px 0;text-align:center;color:var(--ink-soft);font-size:14px;}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--forest-deep);color:var(--white);padding:10px 20px;border-radius:20px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:99;}
+  .toast.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<svg style="display:none">
+  <symbol id="ic-map" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 20l-5-2V4l5 2 6-2 5 2v14l-5-2-6 2z"/><path d="M9 6v14M15 4v14"/></symbol>
+  <symbol id="ic-play" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M10 8l6 4-6 4V8z" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="ic-camera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13.5" r="3.5"/></symbol>
+</svg>
+
+<div class="wrap">
+  <header>
+    <div class="header-row">
+      <div>
+        <h1 id="tripTitle">旅遊景點候選清單</h1>
+        <div id="tripDatesText" style="margin-top:8px;color:var(--ink-soft);font-size:14px;"></div>
+      </div>
+      <div class="header-right">
+        <button class="admin-toggle" id="adminToggle">管理模式</button>
+        <div class="admin-login hidden" id="adminLogin">
+          <input type="password" id="adminPwInput" placeholder="輸入管理密碼">
+          <button class="btn btn-primary" id="adminPwConfirm">確認</button>
+          <button class="btn btn-ghost" id="adminPwCancel">取消</button>
+        </div>
+        <div class="me">
+          你的名字
+          <input id="meName" type="text" placeholder="輸入你的名字" maxlength="12">
+        </div>
+      </div>
+    </div>
+    <div class="tabs">
+      <button class="tab active" data-tab="list">景點清單</button>
+      <button class="tab" data-tab="stats">統計總覽</button>
+      <button class="tab admin-only hidden" data-tab="settings">行程設定</button>
+    </div>
+  </header>
+
+  <div id="loading" class="loading">載入中…</div>
+
+  <div class="panel active" id="panel-list">
+    <div id="stayCardWrap"></div>
+    <div class="subtabs">
+      <button class="subtab active" data-type="play">玩的</button>
+      <button class="subtab" data-type="food">吃的</button>
+    </div>
+    <div class="list-toolbar">
+      <p id="listCount"></p>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <div class="sort-wrap">
+          排序
+          <select id="sortKey">
+            <option value="name">名稱</option>
+            <option value="drive">距離民宿車程</option>
+            <option value="driveLuzhou">距離蘆洲車程</option>
+            <option value="time">預計可停留時間</option>
+          </select>
+        </div>
+        <button class="sort-dir" id="sortDir" title="切換排序方向">↑ 由小到大</button>
+        <button class="btn btn-primary admin-only hidden" id="btnAdd">＋ 新增地點</button>
+      </div>
+    </div>
+    <div class="cards" id="cardsWrap"></div>
+    <div class="empty" id="emptyMsg" style="display:none;"></div>
+  </div>
+
+  <div class="panel" id="panel-stats">
+    <h2>統計總覽</h2>
+    <p style="color:var(--ink-soft);font-size:13.5px;margin-top:4px;">依「感興趣減沒興趣」的淨分數，由高到低排序。</p>
+    <div class="subtabs">
+      <button class="subtab active" data-stat-type="play">玩的</button>
+      <button class="subtab" data-stat-type="food">吃的</button>
+    </div>
+    <div class="card-box" style="margin-top:16px;" id="statsWrap"></div>
+  </div>
+
+  <div class="panel" id="panel-settings">
+    <h2>行程設定</h2>
+    <div class="card-box" style="margin-top:16px;">
+      <div class="field-grid">
+        <div class="field"><label>出發日期</label><input type="date" id="setStart"></div>
+        <div class="field"><label>結束日期</label><input type="date" id="setEnd"></div>
+        <div class="field full"><label>住宿地點名稱</label><input type="text" id="setStayName" placeholder="例如：枕House民宿 D棟"></div>
+        <div class="field full"><label>住宿地址</label><input type="text" id="setStayAddr" placeholder="宜蘭縣..."></div>
+        <div class="field full"><label>住宿備註</label><textarea id="setStayNote" placeholder="設備、可代訂項目、注意事項等"></textarea></div>
+        <div class="field full">
+          <label>住宿照片 <span class="hint">(最多6張，可上傳圖片或貼圖片網址)</span></label>
+          <div class="photo-list" id="setStayPhotoList"></div>
+          <div class="photo-add-row">
+            <input type="file" id="setStayPhotoFile" accept="image/*" multiple>
+            <input type="url" id="setStayPhotoUrl" placeholder="或貼上圖片網址後按加入">
+            <button type="button" class="btn btn-ghost" id="setStayPhotoUrlAdd">加入</button>
+          </div>
+        </div>
+        <div class="field"><label>Google地圖連結</label><input type="url" id="setStayMaps" placeholder="https://maps.google.com/..."></div>
+        <div class="field full"><label>短影音連結</label><input type="url" id="setStayVideo" placeholder="https://..."></div>
+      </div>
+      <div class="save-row">
+        <button class="btn btn-primary" id="btnSaveSettings">儲存設定</button>
+        <span class="save-msg" id="settingsMsg"></span>
+      </div>
+
+      <div class="danger-zone">
+        <h3>清空所有行程資料</h3>
+        <p>會刪除所有候選地點、投票紀錄與行程設定，且無法復原。輸入「清空」以確認。</p>
+        <div style="display:flex;gap:8px;">
+          <input type="text" id="clearConfirmInput" placeholder="輸入：清空" style="border:1px solid var(--line);border-radius:4px;padding:8px 10px;width:140px;">
+          <button class="btn btn-danger" id="btnClearAll">清空所有行程</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD/EDIT MODAL -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h3 id="modalTitle">新增地點</h3>
+    <div class="field">
+      <label>分類</label>
+      <div class="type-pick">
+        <button type="button" id="typePlay" class="active" data-type="play">玩的</button>
+        <button type="button" id="typeFood" data-type="food">吃的</button>
+      </div>
+    </div>
+    <div class="field-grid">
+      <div class="field full"><label>地點名稱</label><input type="text" id="fName" placeholder="例如：忍者村"></div>
+      <div class="field full"><label>地址</label><input type="text" id="fAddr" placeholder="宜蘭縣..."></div>
+      <div class="field full"><label>簡介</label><textarea id="fBlurb" placeholder="這個地方是做什麼的、特色是什麼"></textarea></div>
+      <div class="field"><label>價格</label><input type="text" id="fPrice" placeholder="例如：200元/人"></div>
+      <div class="field"><label>預計可停留時間</label><input type="text" id="fTime" placeholder="例如：1小時、0.5–1小時"></div>
+      <div class="field">
+        <label>距離民宿車程</label>
+        <div class="unit-input"><input type="number" min="0" id="fDrive" placeholder="10"><span>分鐘</span></div>
+      </div>
+      <div class="field">
+        <label>距離蘆洲車程 <span class="hint">(選填)</span></label>
+        <div class="unit-input"><input type="number" min="0" id="fDriveLuzhou" placeholder="60"><span>分鐘</span></div>
+      </div>
+      <div class="field">
+        <label>室外／室內</label>
+        <select id="fIndoor">
+          <option value="">未填</option>
+          <option value="室外">室外</option>
+          <option value="室內">室內</option>
+          <option value="皆可">皆可</option>
+        </select>
+      </div>
+      <div class="field"><label>Google地圖連結</label><input type="url" id="fMaps" placeholder="https://maps.google.com/..."></div>
+      <div class="field full"><label>短影音連結</label><input type="url" id="fVideo" placeholder="https://..."></div>
+      <div class="field full">
+        <label>照片 <span class="hint">(最多6張，可上傳圖片或貼圖片網址)</span></label>
+        <div class="photo-list" id="fPhotoList"></div>
+        <div class="photo-add-row">
+          <input type="file" id="fPhotoFile" accept="image/*" multiple>
+          <input type="url" id="fPhotoUrl" placeholder="或貼上圖片網址後按加入">
+          <button type="button" class="btn btn-ghost" id="fPhotoUrlAdd">加入</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="btnCancel">取消</button>
+      <button class="btn btn-danger" id="btnDelete" style="display:none;">刪除這個地點</button>
+      <button class="btn btn-primary" id="btnSave">儲存</button>
+    </div>
+  </div>
+</div>
+
+<div class="lightbox" id="lightbox">
+  <button class="lb-close" id="lbClose">&times;</button>
+  <button class="lb-nav lb-prev" id="lbPrev">&#8249;</button>
+  <img id="lbImg" src="" alt="">
+  <button class="lb-nav lb-next" id="lbNext">&#8250;</button>
+  <div class="lb-counter" id="lbCounter"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ⚠️ 把下面這行換成你部署 Apps Script 後拿到的網址，例如：
+// const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycb.../exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxQ6GPg5h3nxXKCIRBchU77-z4iqo0AA4YZSNtHxNZa-6Rdyt8CcAsiUbUYEj5GeHef/exec';
+
+const ME_KEY = 'me:name'; // 存在瀏覽器 localStorage，只有自己看得到
+const ADMIN_CODE = '1234'; // 開發者請自行更改這組密碼再上線
+const MAX_PHOTOS = 6;
+const CELL_LIMIT = 45000; // Google試算表單一儲存格上限約50,000字，抓保守一點
+
+function getPhotos(obj, singleKey){
+  if(obj.photos && obj.photos.length) return obj.photos;
+  if(singleKey && obj[singleKey]) return [obj[singleKey]];
+  return [];
+}
+
+/* ---------- lightbox ---------- */
+let lbPhotos = [];
+let lbIndex = 0;
+const lightboxEl = () => document.getElementById('lightbox');
+function openLightbox(photos, startIndex){
+  if(!photos || !photos.length) return;
+  lbPhotos = photos;
+  lbIndex = startIndex || 0;
+  renderLightbox();
+  lightboxEl().classList.add('active');
+}
+function closeLightbox(){
+  lightboxEl().classList.remove('active');
+}
+function renderLightbox(){
+  document.getElementById('lbImg').src = lbPhotos[lbIndex];
+  document.getElementById('lbCounter').textContent = lbPhotos.length>1 ? `${lbIndex+1} / ${lbPhotos.length}` : '';
+  const multi = lbPhotos.length>1;
+  document.getElementById('lbPrev').style.display = multi ? 'flex' : 'none';
+  document.getElementById('lbNext').style.display = multi ? 'flex' : 'none';
+}
+function initLightboxControls(){
+  document.getElementById('lbClose').addEventListener('click', closeLightbox);
+  document.getElementById('lbPrev').addEventListener('click', ()=>{
+    lbIndex = (lbIndex - 1 + lbPhotos.length) % lbPhotos.length;
+    renderLightbox();
+  });
+  document.getElementById('lbNext').addEventListener('click', ()=>{
+    lbIndex = (lbIndex + 1) % lbPhotos.length;
+    renderLightbox();
+  });
+  lightboxEl().addEventListener('click', (e)=>{
+    if(e.target === lightboxEl()) closeLightbox();
+  });
+  document.addEventListener('keydown', (e)=>{
+    if(!lightboxEl().classList.contains('active')) return;
+    if(e.key === 'Escape') closeLightbox();
+    if(e.key === 'ArrowLeft') document.getElementById('lbPrev').click();
+    if(e.key === 'ArrowRight') document.getElementById('lbNext').click();
+  });
+}
+initLightboxControls();
+
+/* ---------- multi-photo picker ---------- */
+function compressImageFile(file, maxW, quality){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxW/img.width);
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width*scale;
+        canvas.height = img.height*scale;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject;
+      img.src = reader.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function createPhotoManager({fileInputId, urlInputId, urlAddBtnId, listId, getPhotos, setPhotos}){
+  function renderList(){
+    const listEl = document.getElementById(listId);
+    const photos = getPhotos();
+    listEl.innerHTML = photos.map((p,i)=>`
+      <div class="thumb"><img src="${escapeHtml(p)}"><button type="button" class="rm" data-i="${i}">&times;</button></div>
+    `).join('');
+    listEl.querySelectorAll('.rm').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const photos2 = getPhotos().slice();
+        photos2.splice(Number(btn.dataset.i), 1);
+        setPhotos(photos2);
+        renderList();
+      });
+    });
+  }
+  document.getElementById(fileInputId).addEventListener('change', async (e)=>{
+    const files = Array.from(e.target.files || []);
+    if(!files.length) return;
+    let photos = getPhotos().slice();
+    for(const file of files){
+      if(photos.length >= MAX_PHOTOS){
+        toast(`最多只能放 ${MAX_PHOTOS} 張照片`);
+        break;
+      }
+      try{
+        const dataUrl = await compressImageFile(file, 480, 0.62);
+        photos.push(dataUrl);
+      }catch(err){
+        console.error('compress failed', err);
+      }
+    }
+    setPhotos(photos);
+    renderList();
+    e.target.value = '';
+  });
+  document.getElementById(urlAddBtnId).addEventListener('click', ()=>{
+    const urlInput = document.getElementById(urlInputId);
+    const url = urlInput.value.trim();
+    if(!url) return;
+    const photos = getPhotos().slice();
+    if(photos.length >= MAX_PHOTOS){
+      toast(`最多只能放 ${MAX_PHOTOS} 張照片`);
+      return;
+    }
+    photos.push(url);
+    setPhotos(photos);
+    urlInput.value = '';
+    renderList();
+  });
+  return { renderList };
+}
+
+
+let state = { settings: null, candidates: [], votes: {}, myName: '' };
+let editingId = null;
+let currentType = 'play';
+let sortKey = 'name';
+let sortDir = 1; // 1 asc, -1 desc
+let isAdmin = false;
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+async function apiGetAll(){
+  if(APPS_SCRIPT_URL.indexOf('PASTE_YOUR') === 0){
+    toast('尚未設定 APPS_SCRIPT_URL，請先部署 Apps Script 並貼上網址');
+    return { settings:{}, candidates:[], votes:{} };
+  }
+  try{
+    const res = await fetch(`${APPS_SCRIPT_URL}?action=getAll`);
+    return await res.json();
+  }catch(e){
+    console.error('apiGetAll failed', e);
+    toast('讀取資料失敗，請檢查網路連線或 Apps Script 網址是否正確');
+    return { settings:{}, candidates:[], votes:{} };
+  }
+}
+async function apiPost(payload){
+  if(APPS_SCRIPT_URL.indexOf('PASTE_YOUR') === 0){
+    toast('尚未設定 APPS_SCRIPT_URL，請先部署 Apps Script 並貼上網址');
+    return false;
+  }
+  try{
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // 用text/plain避免CORS預檢請求
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if(data && data.error){
+      console.error('api error', data.error);
+      toast('儲存失敗：' + data.error);
+      return false;
+    }
+    return true;
+  }catch(e){
+    console.error('apiPost failed', e);
+    toast('儲存失敗，請稍後再試');
+    return false;
+  }
+}
+function cellTooBig(value){
+  return JSON.stringify(value||[]).length > CELL_LIMIT;
+}
+
+const DEFAULT_CANDIDATES = [
+  {id:'c1',type:'play',name:'忍者村',addr:'礁溪鄉匏崙村匏杓崙路95-6號',blurb:'十個挑戰關卡（丟手裡劍、苦無、飛簷走壁），過關後頒發忍者結業證書。',price:'200元/人',time:'1小時',drive:8,driveLuzhou:null,indoor:'',maps:'',video:'',photo:''},
+  {id:'c2',type:'play',name:'空氣島卡丁車 礁溪場',addr:'礁溪鄉龍潭村漳福路45號',blurb:'卡丁車、水彈槍射擊「槍林彈雨」。',price:'卡丁200/6.5分；水彈200/人',time:'0.5–1小時',drive:10,driveLuzhou:null,indoor:'',maps:'',video:'',photo:''},
+  {id:'c3',type:'play',name:'螃蟹冒泡（地底湧泉）',addr:'員山鄉湖北村大湖路18-1號',blurb:'天然湧泉清澈冰涼，適合玩水消暑，水位約到成人大腿，附近餐車多，路邊好停車。',price:'免費',time:'1小時',drive:10,driveLuzhou:null,indoor:'室外',maps:'',video:'',photo:''},
+  {id:'c4',type:'play',name:'頭等倉 Heads Up',addr:'員山鄉員山村賢德路二段188號',blurb:'很多需要用到頭部的闖關遊戲室。',price:'200元/人',time:'1.5小時',drive:12,driveLuzhou:null,indoor:'室內',maps:'',video:'',photo:''},
+  {id:'c5',type:'play',name:'勇者桂冠王',addr:'員山鄉蓁巷村員山路二段255號',blurb:'羅馬競技場主題室內景點，關卡多、很消耗體力，假日可能需排隊。',price:'230元/人',time:'1小時',drive:16,driveLuzhou:null,indoor:'室內',maps:'',video:'',photo:''},
+  {id:'c6',type:'play',name:'上山搗彈',addr:'礁溪鄉三民村礁溪路三段56號',blurb:'漆彈、水彈大戰，室內場地，另有獨木舟、溯溪、SUP、遊艇、沙灘車、野溪溫泉。',price:'漆彈100發/500元起',time:'1–2小時',drive:18,driveLuzhou:null,indoor:'皆可',maps:'',video:'',photo:''},
+  {id:'c7',type:'play',name:'四方林靶場',addr:'大同鄉寒溪村寒溪巷68之13號',blurb:'真槍實彈飛靶，比賽用槍，散彈槍。',price:'600元/10發',time:'0.5–1小時',drive:35,driveLuzhou:null,indoor:'室外',maps:'',video:'',photo:''},
+  {id:'c8',type:'play',name:'空氣島卡丁車 羅東',addr:'羅東鎮集祥里民生路6號4樓',blurb:'室內卡丁車場，有冷氣。',price:'200元/7分鐘',time:'0.5小時內',drive:35,driveLuzhou:null,indoor:'室內',maps:'',video:'',photo:''},
+  {id:'c9',type:'play',name:'金特務007',addr:'五結鄉協和村親河路二段57號',blurb:'間諜主題挑戰：開鎖、摩斯密碼、拳擊、多種射擊模擬。',price:'250元/人',time:'1小時',drive:35,driveLuzhou:null,indoor:'室內',maps:'',video:'',photo:''},
+  {id:'c10',type:'play',name:'免睡殿 Sleepy Free',addr:'蘇澳鎮蘇西里海山西路280號',blurb:'空間鋪滿大型柔軟床墊，枕頭大戰、足球等多種遊戲。',price:'120元/人／30分鐘',time:'0.5–1小時',drive:35,driveLuzhou:null,indoor:'室內',maps:'',video:'',photo:''},
+  {id:'c11',type:'play',name:'歪歪球 Wild Wild Ball',addr:'蘇澳鎮海山西路275號',blurb:'12種球類互動關卡，最有名的是巨型人體彈珠台。',price:'200元/人',time:'1小時',drive:35,driveLuzhou:null,indoor:'室內',maps:'',video:'',photo:''},
+  {id:'c12',type:'play',name:'安永心食館',addr:'蘇澳鎮新城里中山路二段415號',blurb:'1樓伴手禮；2樓披薩DIY、空氣槍、雷射槍戰；3樓火鍋自助吧。',price:'250元/人',time:'2–3小時',drive:38,driveLuzhou:null,indoor:'室內',maps:'',video:'',photo:''},
+  {id:'c13',type:'play',name:'冬山河森林公園生態綠舟',addr:'冬山鄉太和村冬山路二段172號',blurb:'景色優美，提供電動船導覽、水上自行車等水上活動。',price:'30元/人',time:'2小時',drive:42,driveLuzhou:null,indoor:'室外',maps:'',video:'',photo:''},
+  {id:'c14',type:'play',name:'空氣島彈跳工廠',addr:'蘇澳鎮蘇東里港區路8號',blurb:'極限彈跳區＋電子遊戲區，入場需另購止滑襪（50元）。',price:'380元/人／2小時',time:'2–3小時',drive:42,driveLuzhou:null,indoor:'室內',maps:'',video:'',photo:''},
+  {id:'c15',type:'play',name:'外澳飛行傘基地',addr:'頭城鎮港口里港口段31號山坡地',blurb:'俯瞰海景、外澳沙灘與龜山島，飛行時間約3–5分鐘。',price:'1500元/人',time:'1小時',drive:48,driveLuzhou:null,indoor:'室外',maps:'',video:'',photo:''},
+  {id:'c16',type:'play',name:'金岳漆彈場',addr:'南澳鄉金岳村金岳部落聯絡道路',blurb:'評價很高，環境好、教練幽默，另有溯溪、漂漂河、沙灘車、泡泡足球。',price:'700元/200發子彈',time:'1–2小時',drive:73,driveLuzhou:null,indoor:'室外',maps:'',video:'',photo:''},
+  {id:'c17',type:'food',name:'石川手作料理',addr:'員山鄉湖西村隘界六路68號',blurb:'合菜。起司牛奶海鮮鍋評價高，生魚片新鮮，可預訂600元/人套餐。',price:'約600元/人',time:'',drive:15,driveLuzhou:null,indoor:'室內',maps:'',video:'',photo:''},
+  {id:'c18',type:'food',name:'礁溪香腸伯',addr:'礁溪鄉大忠村五峰路',blurb:'小吃。潤餅皮包裹的大腸包小腸，號稱香腸界的天花板。',price:'',time:'',drive:22,driveLuzhou:null,indoor:'室外',maps:'',video:'',photo:''},
+  {id:'c19',type:'food',name:'正好鮮肉小籠包（五結店）',addr:'五結鄉三興村五結中路三段320號',blurb:'小吃。小籠包知名，蒸餃皮薄湯多，好停車。',price:'',time:'',drive:27,driveLuzhou:null,indoor:'室內',maps:'',video:'',photo:''},
+  {id:'c20',type:'food',name:'金珠蔥油餅－羅東店',addr:'羅東鎮漢民里中山路四段83號',blurb:'小吃。雙蛋雙蔥一吃就忘不了。',price:'',time:'',drive:30,driveLuzhou:null,indoor:'室外',maps:'',video:'',photo:''}
+];
+
+function fmtDate(d){
+  if(!d) return '';
+  const [y,m,day] = d.split('-');
+  return `${m}/${day}`;
+}
+function renderHeader(){
+  const s = state.settings || {};
+  const parts = [];
+  if(s.start || s.end) parts.push(`${fmtDate(s.start)} → ${fmtDate(s.end)}`);
+  if(s.stayName) parts.push('住宿：' + s.stayName);
+  document.getElementById('tripDatesText').textContent = parts.join('　');
+}
+function escapeHtml(str){
+  return (str||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function voteCounts(id){
+  const v = state.votes[id] || {};
+  let yes=0, no=0, neutral=0;
+  Object.values(v).forEach(choice => {
+    if(choice==='yes') yes++;
+    else if(choice==='no') no++;
+    else if(choice==='neutral') neutral++;
+  });
+  return {yes, no, neutral, entries:v};
+}
+function parseMinutesFromTimeText(text){
+  if(!text) return Infinity;
+  const m = text.match(/([\d.]+)\s*小時/);
+  if(m) return parseFloat(m[1]) * 60;
+  const m2 = text.match(/([\d.]+)\s*分鐘/);
+  if(m2) return parseFloat(m2[1]);
+  return Infinity;
+}
+
+function sortedList(){
+  const list = state.candidates.filter(c => c.type === currentType);
+  const key = sortKey;
+  list.sort((a,b)=>{
+    let av, bv;
+    if(key==='name'){
+      av = a.name||''; bv = b.name||'';
+      return av.localeCompare(bv, 'zh-Hant') * sortDir;
+    }
+    if(key==='drive'){ av = (a.drive??Infinity); bv = (b.drive??Infinity); }
+    else if(key==='driveLuzhou'){ av = (a.driveLuzhou??Infinity); bv = (b.driveLuzhou??Infinity); }
+    else if(key==='time'){ av = parseMinutesFromTimeText(a.time); bv = parseMinutesFromTimeText(b.time); }
+    return (av - bv) * sortDir;
+  });
+  return list;
+}
+
+function renderCards(){
+  const wrap = document.getElementById('cardsWrap');
+  const empty = document.getElementById('emptyMsg');
+  const list = sortedList();
+  document.getElementById('listCount').textContent = `共 ${list.length} 個地點`;
+
+  if(!list.length){
+    wrap.innerHTML = '';
+    empty.style.display = 'block';
+    empty.textContent = currentType === 'play'
+      ? '還沒有「玩的」候選地點。'
+      : '還沒有「吃的」候選地點。';
+    return;
+  }
+  empty.style.display = 'none';
+
+  wrap.innerHTML = list.map(c => {
+    const {yes, no, neutral, entries} = voteCounts(c.id);
+    const mine = state.myName ? entries[state.myName] : null;
+    const photos = getPhotos(c, 'photo');
+    const photoHtml = photos.length
+      ? `<img src="${escapeHtml(photos[0])}" alt="">${photos.length>1 ? `<span class="count-badge"><svg width="12" height="12"><use href="#ic-camera"/></svg>${photos.length}</span>` : ''}`
+      : `<svg width="28" height="28"><use href="#ic-camera"/></svg>`;
+    const links = [];
+    if(c.maps) links.push(`<a href="${escapeHtml(c.maps)}" target="_blank" rel="noopener"><svg><use href="#ic-map"/></svg>Google地圖</a>`);
+    if(c.video) links.push(`<a href="${escapeHtml(c.video)}" target="_blank" rel="noopener"><svg><use href="#ic-play"/></svg>短影音</a>`);
+    return `
+    <div class="spot">
+      <div class="photo ${photos.length?'clickable':''}" ${photos.length?`data-photos-id="${c.id}"`:''}>${photoHtml}</div>
+      <div class="body">
+        <h4>${escapeHtml(c.name)}</h4>
+        <div class="addr">${escapeHtml(c.addr||'')}</div>
+        <div class="blurb">${escapeHtml(c.blurb||'')}</div>
+        <div class="chips">
+          ${c.price ? `<span class="chip price">${escapeHtml(c.price)}</span>` : ''}
+          ${c.time ? `<span class="chip time">預計可停留 ${escapeHtml(c.time)}</span>` : ''}
+          ${(c.drive || c.drive===0) ? `<span class="chip drive">距離民宿車程 ${c.drive} 分鐘</span>` : ''}
+          ${(c.driveLuzhou || c.driveLuzhou===0) ? `<span class="chip drive">距離蘆洲車程 ${c.driveLuzhou} 分鐘</span>` : ''}
+          ${c.indoor ? `<span class="chip indoor">${escapeHtml(c.indoor)}</span>` : ''}
+        </div>
+        ${links.length ? `<div class="links-row">${links.join('')}</div>` : ''}
+        <div class="vote-row">
+          <button class="vote-btn yes ${mine==='yes'?'selected':''}" data-id="${c.id}" data-choice="yes">
+            <span class="n">${yes}</span>感興趣
+          </button>
+          <button class="vote-btn neutral ${mine==='neutral'?'selected':''}" data-id="${c.id}" data-choice="neutral">
+            <span class="n">${neutral}</span>都可以
+          </button>
+          <button class="vote-btn no ${mine==='no'?'selected':''}" data-id="${c.id}" data-choice="no">
+            <span class="n">${no}</span>沒興趣
+          </button>
+        </div>
+        <div class="card-tools admin-only ${isAdmin?'':'hidden'}">
+          <button class="icon-btn" data-edit="${c.id}">編輯</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  wrap.querySelectorAll('.vote-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>handleVote(btn.dataset.id, btn.dataset.choice));
+  });
+  wrap.querySelectorAll('[data-edit]').forEach(btn=>{
+    btn.addEventListener('click', ()=>openModal(btn.dataset.edit));
+  });
+  wrap.querySelectorAll('.photo.clickable[data-photos-id]').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const c = state.candidates.find(x=>x.id===el.dataset.photosId);
+      if(c) openLightbox(getPhotos(c, 'photo'));
+    });
+  });
+}
+
+let statsType = 'play';
+
+function renderStats(){
+  const wrap = document.getElementById('statsWrap');
+  if(!state.candidates.length){
+    wrap.innerHTML = '<p style="color:var(--ink-soft);font-size:14px;">還沒有候選地點可以統計。</p>';
+    return;
+  }
+  function buildRows(type){
+    return state.candidates.filter(c=>c.type===type).map(c=>{
+      const {yes, no, neutral, entries} = voteCounts(c.id);
+      const yesNames = Object.entries(entries).filter(([,v])=>v==='yes').map(([n])=>n);
+      const neutralNames = Object.entries(entries).filter(([,v])=>v==='neutral').map(([n])=>n);
+      const noNames = Object.entries(entries).filter(([,v])=>v==='no').map(([n])=>n);
+      return {name:c.name, yes, no, neutral, score: yes-no, yesNames, neutralNames, noNames};
+    }).sort((a,b)=>b.score-a.score);
+  }
+  const rows = buildRows(statsType);
+  const maxTotal = Math.max(1, ...rows.map(r=>r.yes+r.no+r.neutral));
+
+  if(!rows.length){
+    wrap.innerHTML = `<p style="color:var(--ink-soft);font-size:13.5px;">${statsType==='play'?'還沒有「玩的」候選地點。':'還沒有「吃的」候選地點。'}</p>`;
+    return;
+  }
+
+  wrap.innerHTML = rows.map(r=>{
+    const yesPct = (r.yes/maxTotal*100);
+    const neutralPct = (r.neutral/maxTotal*100);
+    const noPct = (r.no/maxTotal*100);
+    const who = [
+      r.yesNames.length ? `想去：${r.yesNames.join('、')}` : '',
+      r.neutralNames.length ? `都可以：${r.neutralNames.join('、')}` : '',
+      r.noNames.length ? `不想去：${r.noNames.join('、')}` : ''
+    ].filter(Boolean).join('　');
+    return `
+    <div class="stat-row">
+      <div class="stat-name">
+        <h4>${escapeHtml(r.name)}</h4>
+        ${who ? `<div class="who">${escapeHtml(who)}</div>` : `<div class="who">尚無投票</div>`}
+      </div>
+      <div class="bar-wrap"><div class="bar-yes" style="width:${yesPct}%"></div><div class="bar-neutral" style="width:${neutralPct}%"></div><div class="bar-no" style="width:${noPct}%"></div></div>
+      <div class="stat-score">${r.score>0?'+':''}${r.score}</div>
+    </div>`;
+  }).join('');
+}
+
+document.querySelectorAll('#panel-stats .subtab').forEach(t=>{
+  t.addEventListener('click', ()=>{
+    statsType = t.dataset.statType;
+    document.querySelectorAll('#panel-stats .subtab').forEach(x=>x.classList.toggle('active', x===t));
+    renderStats();
+  });
+});
+
+async function handleVote(id, choice){
+  if(!state.myName){
+    toast('請先在右上角輸入你的名字');
+    document.getElementById('meName').focus();
+    return;
+  }
+  const votes = JSON.parse(JSON.stringify(state.votes));
+  votes[id] = votes[id] || {};
+  let sendChoice = choice;
+  if(votes[id][state.myName] === choice){
+    delete votes[id][state.myName];
+    sendChoice = null; // 取消投票
+  } else {
+    votes[id][state.myName] = choice;
+  }
+  state.votes = votes;
+  renderCards();
+  renderStats();
+  await apiPost({ action:'vote', candidateId:id, voterName:state.myName, choice:sendChoice });
+}
+
+function switchTab(tab){
+  if(tab==='settings' && !isAdmin) return;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===tab));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active', p.id==='panel-'+tab));
+  if(tab==='stats') renderStats();
+}
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click', ()=>switchTab(t.dataset.tab)));
+
+document.querySelectorAll('#panel-list .subtab').forEach(t=>{
+  t.addEventListener('click', ()=>{
+    currentType = t.dataset.type;
+    document.querySelectorAll('#panel-list .subtab').forEach(x=>x.classList.toggle('active', x===t));
+    renderCards();
+  });
+});
+
+document.getElementById('sortKey').addEventListener('change', (e)=>{
+  sortKey = e.target.value;
+  renderCards();
+});
+document.getElementById('sortDir').addEventListener('click', ()=>{
+  sortDir *= -1;
+  document.getElementById('sortDir').textContent = sortDir===1 ? '↑ 由小到大' : '↓ 由大到小';
+  renderCards();
+});
+
+/* ---------- admin toggle ---------- */
+function applyAdminUI(){
+  document.querySelectorAll('.admin-only').forEach(el=>el.classList.toggle('hidden', !isAdmin));
+  document.getElementById('adminToggle').textContent = isAdmin ? '結束管理模式' : '管理模式';
+  document.getElementById('adminToggle').classList.toggle('on', isAdmin);
+  if(!isAdmin){
+    const settingsTab = document.querySelector('.tab[data-tab="settings"]');
+    if(settingsTab.classList.contains('active')) switchTab('list');
+  }
+  renderCards();
+  renderStayCard();
+}
+const adminLoginBar = document.getElementById('adminLogin');
+const adminPwInput = document.getElementById('adminPwInput');
+document.getElementById('adminToggle').addEventListener('click', ()=>{
+  if(isAdmin){
+    isAdmin = false;
+    applyAdminUI();
+    return;
+  }
+  adminLoginBar.classList.toggle('hidden');
+  if(!adminLoginBar.classList.contains('hidden')){
+    adminPwInput.value = '';
+    adminPwInput.focus();
+  }
+});
+document.getElementById('adminPwConfirm').addEventListener('click', ()=>{
+  if(adminPwInput.value === ADMIN_CODE){
+    isAdmin = true;
+    adminLoginBar.classList.add('hidden');
+    applyAdminUI();
+    toast('已進入管理模式');
+  } else {
+    toast('密碼錯誤');
+    adminPwInput.value = '';
+    adminPwInput.focus();
+  }
+});
+document.getElementById('adminPwCancel').addEventListener('click', ()=>{
+  adminLoginBar.classList.add('hidden');
+});
+adminPwInput.addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter') document.getElementById('adminPwConfirm').click();
+});
+
+/* ---------- settings ---------- */
+window._stayPhotos = [];
+function fillSettingsForm(){
+  const s = state.settings || {};
+  document.getElementById('setStart').value = s.start || '';
+  document.getElementById('setEnd').value = s.end || '';
+  document.getElementById('setStayName').value = s.stayName || '';
+  document.getElementById('setStayAddr').value = s.stayAddr || '';
+  document.getElementById('setStayNote').value = s.stayNote || '';
+  document.getElementById('setStayMaps').value = s.stayMaps || '';
+  document.getElementById('setStayVideo').value = s.stayVideo || '';
+  document.getElementById('setStayPhotoFile').value = '';
+  document.getElementById('setStayPhotoUrl').value = '';
+  window._stayPhotos = getPhotos(s, 'stayPhoto').slice();
+  stayPhotoManager.renderList();
+}
+
+const stayPhotoManager = createPhotoManager({
+  fileInputId: 'setStayPhotoFile',
+  urlInputId: 'setStayPhotoUrl',
+  urlAddBtnId: 'setStayPhotoUrlAdd',
+  listId: 'setStayPhotoList',
+  getPhotos: () => window._stayPhotos,
+  setPhotos: (p) => { window._stayPhotos = p; },
+});
+
+function renderStayCard(){
+  const wrap = document.getElementById('stayCardWrap');
+  const s = state.settings || {};
+  if(!s.stayName && !s.start && !s.end){
+    wrap.innerHTML = `<div class="empty" style="margin-top:0;margin-bottom:22px;">尚未設定住宿與行程日期。${isAdmin ? '到「行程設定」新增。' : '請管理者到「行程設定」新增。'}</div>`;
+    return;
+  }
+  const photos = getPhotos(s, 'stayPhoto');
+  const photoHtml = photos.length
+    ? `<img src="${escapeHtml(photos[0])}" alt="">${photos.length>1 ? `<span class="count-badge"><svg width="12" height="12"><use href="#ic-camera"/></svg>${photos.length}</span>` : ''}`
+    : `<svg width="28" height="28"><use href="#ic-camera"/></svg>`;
+  const links = [];
+  if(s.stayMaps) links.push(`<a href="${escapeHtml(s.stayMaps)}" target="_blank" rel="noopener"><svg><use href="#ic-map"/></svg>Google地圖</a>`);
+  if(s.stayVideo) links.push(`<a href="${escapeHtml(s.stayVideo)}" target="_blank" rel="noopener"><svg><use href="#ic-play"/></svg>短影音</a>`);
+  const dateChip = (s.start || s.end) ? `<span class="chip time">${fmtDate(s.start)} → ${fmtDate(s.end)}</span>` : '';
+  wrap.innerHTML = `
+    <div class="spot" style="margin-bottom:24px;max-width:460px;">
+      <div class="photo ${photos.length?'clickable':''}" id="stayPhotoClick">${photoHtml}</div>
+      <div class="body">
+        <h4>住宿：${escapeHtml(s.stayName || '未命名')}</h4>
+        <div class="addr">${escapeHtml(s.stayAddr||'')}</div>
+        <div class="blurb">${escapeHtml(s.stayNote||'')}</div>
+        <div class="chips">${dateChip}</div>
+        ${links.length ? `<div class="links-row">${links.join('')}</div>` : ''}
+      </div>
+    </div>`;
+  if(photos.length){
+    document.getElementById('stayPhotoClick').addEventListener('click', ()=>openLightbox(photos));
+  }
+}
+
+document.getElementById('btnSaveSettings').addEventListener('click', async ()=>{
+  const s = {
+    start: document.getElementById('setStart').value,
+    end: document.getElementById('setEnd').value,
+    stayName: document.getElementById('setStayName').value.trim(),
+    stayAddr: document.getElementById('setStayAddr').value.trim(),
+    stayNote: document.getElementById('setStayNote').value.trim(),
+    photos: window._stayPhotos.slice(),
+    stayMaps: document.getElementById('setStayMaps').value.trim(),
+    stayVideo: document.getElementById('setStayVideo').value.trim(),
+  };
+  if(cellTooBig(s.photos)){
+    toast('住宿照片資料量太大了（超過試算表儲存格上限），請刪掉幾張，或改用貼圖片網址的方式');
+    return;
+  }
+  const ok = await apiPost({ action:'saveSettings', settings:s });
+  if(ok){
+    state.settings = s;
+    renderHeader();
+    renderStayCard();
+    const msg = document.getElementById('settingsMsg');
+    msg.textContent = '已儲存';
+    setTimeout(()=>msg.textContent='', 1800);
+  }
+});
+
+document.getElementById('btnClearAll').addEventListener('click', async ()=>{
+  const v = document.getElementById('clearConfirmInput').value.trim();
+  if(v !== '清空'){
+    toast('請先在欄位輸入「清空」以確認');
+    return;
+  }
+  if(!confirm('確定要清空所有候選地點、投票與行程設定嗎？此動作無法復原。')) return;
+  const ok = await apiPost({ action:'clearAll' });
+  if(ok){
+    const emptySettings = {start:'',end:'',stayName:'',stayAddr:'',stayNote:'',stayMaps:'',stayVideo:'',photos:[]};
+    state.candidates = [];
+    state.votes = {};
+    state.settings = emptySettings;
+    document.getElementById('clearConfirmInput').value = '';
+    fillSettingsForm();
+    renderHeader();
+    renderStayCard();
+    renderCards();
+    renderStats();
+    toast('已清空所有行程資料');
+  }
+});
+
+/* ---------- add / edit modal ---------- */
+const overlay = document.getElementById('overlay');
+let modalType = 'play';
+function setModalType(t){
+  modalType = t;
+  document.getElementById('typePlay').classList.toggle('active', t==='play');
+  document.getElementById('typeFood').classList.toggle('active', t==='food');
+}
+document.getElementById('typePlay').addEventListener('click', ()=>setModalType('play'));
+document.getElementById('typeFood').addEventListener('click', ()=>setModalType('food'));
+
+function openModal(id){
+  if(!isAdmin) return;
+  editingId = id || null;
+  const c = id ? state.candidates.find(x=>x.id===id) : null;
+  document.getElementById('modalTitle').textContent = id ? '編輯地點' : '新增地點';
+  setModalType(c?.type || currentType);
+  document.getElementById('fName').value = c?.name || '';
+  document.getElementById('fAddr').value = c?.addr || '';
+  document.getElementById('fBlurb').value = c?.blurb || '';
+  document.getElementById('fPrice').value = c?.price || '';
+  document.getElementById('fTime').value = c?.time || '';
+  document.getElementById('fDrive').value = (c?.drive ?? '');
+  document.getElementById('fDriveLuzhou').value = (c?.driveLuzhou ?? '');
+  document.getElementById('fIndoor').value = c?.indoor || '';
+  document.getElementById('fMaps').value = c?.maps || '';
+  document.getElementById('fVideo').value = c?.video || '';
+  document.getElementById('fPhotoUrl').value = '';
+  document.getElementById('fPhotoFile').value = '';
+  window._candidatePhotos = getPhotos(c || {}, 'photo').slice();
+  candidatePhotoManager.renderList();
+  document.getElementById('btnDelete').style.display = id ? 'inline-flex' : 'none';
+  overlay.classList.add('active');
+}
+function closeModal(){ overlay.classList.remove('active'); editingId=null; }
+document.getElementById('btnAdd').addEventListener('click', ()=>openModal(null));
+document.getElementById('btnCancel').addEventListener('click', closeModal);
+overlay.addEventListener('click', e=>{ if(e.target===overlay) closeModal(); });
+
+const candidatePhotoManager = createPhotoManager({
+  fileInputId: 'fPhotoFile',
+  urlInputId: 'fPhotoUrl',
+  urlAddBtnId: 'fPhotoUrlAdd',
+  listId: 'fPhotoList',
+  getPhotos: () => window._candidatePhotos || [],
+  setPhotos: (p) => { window._candidatePhotos = p; },
+});
+
+document.getElementById('btnSave').addEventListener('click', async ()=>{
+  const name = document.getElementById('fName').value.trim();
+  if(!name){ toast('請至少填寫地點名稱'); return; }
+  const driveVal = document.getElementById('fDrive').value;
+  const driveLuzhouVal = document.getElementById('fDriveLuzhou').value;
+  const data = {
+    id: editingId || ('c' + Date.now()),
+    type: modalType,
+    name,
+    addr: document.getElementById('fAddr').value.trim(),
+    blurb: document.getElementById('fBlurb').value.trim(),
+    price: document.getElementById('fPrice').value.trim(),
+    time: document.getElementById('fTime').value.trim(),
+    drive: driveVal === '' ? null : Number(driveVal),
+    driveLuzhou: driveLuzhouVal === '' ? null : Number(driveLuzhouVal),
+    indoor: document.getElementById('fIndoor').value,
+    maps: document.getElementById('fMaps').value.trim(),
+    video: document.getElementById('fVideo').value.trim(),
+    photos: (window._candidatePhotos || []).slice(),
+  };
+  if(cellTooBig(data.photos)){
+    toast('這個地點的照片資料量太大了（超過試算表儲存格上限），請刪掉幾張，或改貼圖片網址');
+    return;
+  }
+  const ok = await apiPost({ action:'saveCandidate', candidate:data });
+  if(ok){
+    let list = state.candidates.slice();
+    if(editingId){
+      list = list.map(c => c.id===editingId ? data : c);
+    } else {
+      list.push(data);
+    }
+    state.candidates = list;
+    currentType = modalType;
+    document.querySelectorAll('#panel-list .subtab').forEach(x=>x.classList.toggle('active', x.dataset.type===modalType));
+    renderCards();
+    closeModal();
+    toast('已儲存');
+  }
+});
+document.getElementById('btnDelete').addEventListener('click', async ()=>{
+  if(!editingId) return;
+  if(!confirm('確定要刪除這個地點嗎？')) return;
+  const ok = await apiPost({ action:'deleteCandidate', id:editingId });
+  if(ok){
+    state.candidates = state.candidates.filter(c=>c.id!==editingId);
+    const votes = JSON.parse(JSON.stringify(state.votes));
+    delete votes[editingId];
+    state.votes = votes;
+    renderCards();
+    closeModal();
+    toast('已刪除');
+  }
+});
+
+/* ---------- name ---------- */
+const meInput = document.getElementById('meName');
+let nameTimer;
+meInput.addEventListener('input', ()=>{
+  clearTimeout(nameTimer);
+  nameTimer = setTimeout(()=>{
+    state.myName = meInput.value.trim();
+    try{ localStorage.setItem(ME_KEY, state.myName); }catch(e){}
+    renderCards();
+  }, 500);
+});
+
+/* ---------- init ---------- */
+async function init(){
+  const all = await apiGetAll();
+
+  state.settings = Object.assign(
+    {start:'',end:'',stayName:'',stayAddr:'',stayNote:'',stayMaps:'',stayVideo:'',photos:[]},
+    all.settings || {}
+  );
+  state.candidates = (all.candidates && all.candidates.length) ? all.candidates : DEFAULT_CANDIDATES;
+  state.votes = all.votes || {};
+  try{ state.myName = localStorage.getItem(ME_KEY) || ''; }catch(e){ state.myName = ''; }
+  meInput.value = state.myName;
+
+  if(!all.candidates || !all.candidates.length){
+    await apiPost({ action:'seedDefaults', candidates: DEFAULT_CANDIDATES });
+  }
+
+  fillSettingsForm();
+  renderHeader();
+  applyAdminUI();
+  document.getElementById('loading').style.display = 'none';
+}
+init();
+</script>
+</body>
+</html>
