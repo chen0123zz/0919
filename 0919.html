@@ -155,6 +155,17 @@
   .loading{padding:60px 0;text-align:center;color:var(--ink-soft);font-size:14px;}
   .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--forest-deep);color:var(--white);padding:10px 20px;border-radius:20px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:99;}
   .toast.show{opacity:1;}
+
+  .back-to-top{position:fixed;right:20px;bottom:26px;width:46px;height:46px;border-radius:50%;background:var(--forest);color:var(--white);border:none;font-size:20px;box-shadow:0 4px 14px rgba(30,50,35,0.28);opacity:0;pointer-events:none;transform:translateY(10px);transition:opacity .2s, transform .2s;z-index:60;}
+  .back-to-top.show{opacity:0.92;pointer-events:auto;transform:translateY(0);}
+  .back-to-top:active{opacity:1;}
+
+  .list-progress{font-size:12.5px;color:var(--ink-soft);margin-top:10px;display:flex;align-items:center;gap:8px;}
+  .list-progress .bar{flex:1;max-width:160px;height:6px;background:var(--line);border-radius:6px;overflow:hidden;}
+  .list-progress .bar-fill{height:100%;background:var(--gold);}
+
+  .next-cta{margin-top:22px;background:var(--white);border:1px dashed var(--line);border-radius:6px;padding:20px;text-align:center;}
+  .next-cta p{font-size:14px;color:var(--ink-soft);margin:0 0 12px;}
 </style>
 </head>
 <body>
@@ -216,8 +227,10 @@
         <button class="btn btn-primary admin-only hidden" id="btnAdd">＋ 新增地點</button>
       </div>
     </div>
+    <div class="list-progress" id="listProgress"></div>
     <div class="cards" id="cardsWrap"></div>
     <div class="empty" id="emptyMsg" style="display:none;"></div>
+    <div class="next-cta" id="nextCta"></div>
   </div>
 
   <div class="panel" id="panel-stats">
@@ -332,6 +345,8 @@
 
 <div class="toast" id="toast"></div>
 
+<button class="back-to-top" id="backToTop" aria-label="回到頂部">&#8593;</button>
+
 <script>
 // ⚠️ 把下面這行換成你部署 Apps Script 後拿到的網址，例如：
 // const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycb.../exec';
@@ -388,8 +403,41 @@ function initLightboxControls(){
     if(e.key === 'ArrowLeft') document.getElementById('lbPrev').click();
     if(e.key === 'ArrowRight') document.getElementById('lbNext').click();
   });
+
+  let touchStartX = null;
+  let touchStartY = null;
+  lightboxEl().addEventListener('touchstart', (e)=>{
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+  lightboxEl().addEventListener('touchend', (e)=>{
+    if(touchStartX === null || lbPhotos.length < 2) return;
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    if(Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)){
+      if(dx > 0){ document.getElementById('lbPrev').click(); }
+      else { document.getElementById('lbNext').click(); }
+    }
+    touchStartX = null;
+    touchStartY = null;
+  });
 }
 initLightboxControls();
+
+/* ---------- back to top ---------- */
+const backToTopBtn = document.getElementById('backToTop');
+let scrollTicking = false;
+window.addEventListener('scroll', ()=>{
+  if(scrollTicking) return;
+  scrollTicking = true;
+  requestAnimationFrame(()=>{
+    backToTopBtn.classList.toggle('show', window.scrollY > 400);
+    scrollTicking = false;
+  });
+});
+backToTopBtn.addEventListener('click', ()=>{
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
 
 /* ---------- multi-photo picker ---------- */
 function compressImageFile(file, maxW, quality){
@@ -606,6 +654,8 @@ function renderCards(){
   const empty = document.getElementById('emptyMsg');
   const list = sortedList();
   document.getElementById('listCount').textContent = `共 ${list.length} 個地點`;
+  renderListProgress(list);
+  renderNextCta();
 
   if(!list.length){
     wrap.innerHTML = '';
@@ -672,6 +722,53 @@ function renderCards(){
       if(c) openLightbox(getPhotos(c, 'photo'));
     });
   });
+}
+
+function renderListProgress(list){
+  const el = document.getElementById('listProgress');
+  if(!state.myName){
+    el.innerHTML = `尚未輸入名字，投票不會被記錄。`;
+    return;
+  }
+  if(!list.length){ el.innerHTML = ''; return; }
+  const voted = list.filter(c => {
+    const v = state.votes[c.id];
+    return v && v[state.myName];
+  }).length;
+  const pct = Math.round((voted/list.length)*100);
+  el.innerHTML = `
+    你已經投了 ${voted} / ${list.length} 個地點的票
+    <span class="bar"><span class="bar-fill" style="width:${pct}%"></span></span>
+  `;
+}
+
+function renderNextCta(){
+  const el = document.getElementById('nextCta');
+  if(currentType === 'play'){
+    el.innerHTML = `
+      <p>這區都看過了嗎？別忘了「吃的」那邊也有候選名單喔！</p>
+      <button class="btn btn-primary" id="ctaGoFood">前往「吃的」看看 →</button>
+    `;
+    document.getElementById('ctaGoFood').addEventListener('click', ()=>{
+      selectSubtab('food');
+      window.scrollTo({ top: document.getElementById('panel-list').offsetTop - 10, behavior:'smooth' });
+    });
+  } else {
+    el.innerHTML = `
+      <p>兩邊都投完了嗎？可以去看看大家目前想去哪裡。</p>
+      <button class="btn btn-primary" id="ctaGoStats">查看「統計總覽」→</button>
+    `;
+    document.getElementById('ctaGoStats').addEventListener('click', ()=>{
+      switchTab('stats');
+      window.scrollTo({ top: 0, behavior:'smooth' });
+    });
+  }
+}
+
+function selectSubtab(type){
+  currentType = type;
+  document.querySelectorAll('#panel-list .subtab').forEach(x=>x.classList.toggle('active', x.dataset.type===type));
+  renderCards();
 }
 
 let statsType = 'play';
@@ -758,11 +855,7 @@ function switchTab(tab){
 document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click', ()=>switchTab(t.dataset.tab)));
 
 document.querySelectorAll('#panel-list .subtab').forEach(t=>{
-  t.addEventListener('click', ()=>{
-    currentType = t.dataset.type;
-    document.querySelectorAll('#panel-list .subtab').forEach(x=>x.classList.toggle('active', x===t));
-    renderCards();
-  });
+  t.addEventListener('click', ()=>selectSubtab(t.dataset.type));
 });
 
 document.getElementById('sortKey').addEventListener('change', (e)=>{
