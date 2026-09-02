@@ -103,7 +103,7 @@
   .links-row svg{width:14px;height:14px;}
 
   .vote-row{display:flex;align-items:center;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid var(--line);}
-  .vote-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;border:1px solid var(--line);border-radius:6px;padding:7px 4px;background:var(--white);font-size:12px;color:var(--ink-soft);}
+  .vote-btn{flex:1;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:6px;padding:9px 4px;background:var(--white);font-size:12.5px;font-weight:600;color:var(--ink-soft);}
   .vote-btn .n{font-family:"Fraunces",serif;font-size:16px;font-weight:600;color:var(--ink);}
   .vote-btn.yes.selected{background:#EEF5EF;border-color:var(--good);color:var(--good);}
   .vote-btn.yes.selected .n{color:var(--good);}
@@ -701,15 +701,9 @@ function renderCards(){
         </div>
         ${links.length ? `<div class="links-row">${links.join('')}</div>` : ''}
         <div class="vote-row">
-          <button class="vote-btn yes ${mine==='yes'?'selected':''}" data-id="${c.id}" data-choice="yes">
-            <span class="n">${yes}</span>感興趣
-          </button>
-          <button class="vote-btn neutral ${mine==='neutral'?'selected':''}" data-id="${c.id}" data-choice="neutral">
-            <span class="n">${neutral}</span>都可以
-          </button>
-          <button class="vote-btn no ${mine==='no'?'selected':''}" data-id="${c.id}" data-choice="no">
-            <span class="n">${no}</span>沒興趣
-          </button>
+          <button class="vote-btn yes ${mine==='yes'?'selected':''}" data-id="${c.id}" data-choice="yes">感興趣</button>
+          <button class="vote-btn neutral ${mine==='neutral'?'selected':''}" data-id="${c.id}" data-choice="neutral">都可以</button>
+          <button class="vote-btn no ${mine==='no'?'selected':''}" data-id="${c.id}" data-choice="no">沒興趣</button>
         </div>
         <div class="card-tools admin-only ${isAdmin?'':'hidden'}">
           <button class="icon-btn" data-edit="${c.id}">編輯</button>
