@@ -207,7 +207,7 @@
           排序
           <select id="sortKey">
             <option value="name">名稱</option>
-            <option value="drive">距離民宿車程</option>
+            <option value="drive" selected>距離民宿車程</option>
             <option value="driveLuzhou">距離蘆洲車程</option>
             <option value="time">預計可停留時間</option>
           </select>
@@ -335,7 +335,7 @@
 <script>
 // ⚠️ 把下面這行換成你部署 Apps Script 後拿到的網址，例如：
 // const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycb.../exec';
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxQ6GPg5h3nxXKCIRBchU77-z4iqo0AA4YZSNtHxNZa-6Rdyt8CcAsiUbUYEj5GeHef/exec';
+const APPS_SCRIPT_URL = 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE';
 
 const ME_KEY = 'me:name'; // 存在瀏覽器 localStorage，只有自己看得到
 const ADMIN_CODE = '1234'; // 開發者請自行更改這組密碼再上線
@@ -471,7 +471,7 @@ function createPhotoManager({fileInputId, urlInputId, urlAddBtnId, listId, getPh
 let state = { settings: null, candidates: [], votes: {}, myName: '' };
 let editingId = null;
 let currentType = 'play';
-let sortKey = 'name';
+let sortKey = 'drive';
 let sortDir = 1; // 1 asc, -1 desc
 let isAdmin = false;
 
@@ -549,13 +549,16 @@ const DEFAULT_CANDIDATES = [
 
 function fmtDate(d){
   if(!d) return '';
-  const [y,m,day] = d.split('-');
-  return `${m}/${day}`;
+  const datePart = String(d).split('T')[0]; // 去掉萬一混進來的時間/時區部分
+  const [y,m,day] = datePart.split('-').map(Number);
+  if(!y || !m || !day) return String(d);
+  const weekday = ['日','一','二','三','四','五','六'][new Date(y, m-1, day).getDay()];
+  return `${m}/${day}(${weekday})`;
 }
 function renderHeader(){
   const s = state.settings || {};
   const parts = [];
-  if(s.start || s.end) parts.push(`${fmtDate(s.start)} → ${fmtDate(s.end)}`);
+  if(s.start || s.end) parts.push(`${fmtDate(s.start)}～${fmtDate(s.end)}`);
   if(s.stayName) parts.push('住宿：' + s.stayName);
   document.getElementById('tripDatesText').textContent = parts.join('　');
 }
@@ -857,7 +860,7 @@ function renderStayCard(){
   const links = [];
   if(s.stayMaps) links.push(`<a href="${escapeHtml(s.stayMaps)}" target="_blank" rel="noopener"><svg><use href="#ic-map"/></svg>Google地圖</a>`);
   if(s.stayVideo) links.push(`<a href="${escapeHtml(s.stayVideo)}" target="_blank" rel="noopener"><svg><use href="#ic-play"/></svg>短影音</a>`);
-  const dateChip = (s.start || s.end) ? `<span class="chip time">${fmtDate(s.start)} → ${fmtDate(s.end)}</span>` : '';
+  const dateChip = (s.start || s.end) ? `<span class="chip time">${fmtDate(s.start)}～${fmtDate(s.end)}</span>` : '';
   wrap.innerHTML = `
     <div class="spot" style="margin-bottom:24px;max-width:460px;">
       <div class="photo ${photos.length?'clickable':''}" id="stayPhotoClick">${photoHtml}</div>
