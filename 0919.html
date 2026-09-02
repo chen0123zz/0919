@@ -91,6 +91,7 @@
   .spot h4{font-size:18px;}
   .spot .addr{font-size:12px;color:var(--ink-soft);margin:3px 0 8px;}
   .spot .blurb{font-size:13.5px;white-space:pre-line;flex:1;}
+  .blurb .hl-red{color:var(--bad);font-weight:600;}
   .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;}
   .chip{font-size:11.5px;padding:3px 9px;border-radius:20px;border:1px solid var(--line);color:var(--ink-soft);white-space:nowrap;background:var(--cream);}
   .chip.price{color:var(--coral);border-color:#E8CFC0;background:#FBF2ED;}
@@ -251,7 +252,7 @@
         <div class="field"><label>結束日期</label><input type="date" id="setEnd"></div>
         <div class="field full"><label>住宿地點名稱</label><input type="text" id="setStayName" placeholder="例如：枕House民宿 D棟"></div>
         <div class="field full"><label>住宿地址</label><input type="text" id="setStayAddr" placeholder="宜蘭縣..."></div>
-        <div class="field full"><label>住宿備註</label><textarea id="setStayNote" placeholder="設備、可代訂項目、注意事項等"></textarea></div>
+        <div class="field full"><label>住宿備註 <span class="hint">(可用 **文字** 加粗、!!文字!! 標紅)</span></label><textarea id="setStayNote" placeholder="設備、可代訂項目、注意事項等"></textarea></div>
         <div class="field full">
           <label>住宿照片 <span class="hint">(最多6張，可上傳圖片或貼圖片網址)</span></label>
           <div class="photo-list" id="setStayPhotoList"></div>
@@ -262,7 +263,7 @@
           </div>
         </div>
         <div class="field"><label>Google地圖連結</label><input type="url" id="setStayMaps" placeholder="https://maps.google.com/..."></div>
-        <div class="field full"><label>短影音連結</label><input type="url" id="setStayVideo" placeholder="https://..."></div>
+        <div class="field full"><label>官方網站連結</label><input type="url" id="setStayVideo" placeholder="https://..."></div>
       </div>
       <div class="save-row">
         <button class="btn btn-primary" id="btnSaveSettings">儲存設定</button>
@@ -295,7 +296,7 @@
     <div class="field-grid">
       <div class="field full"><label>地點名稱</label><input type="text" id="fName" placeholder="例如：忍者村"></div>
       <div class="field full"><label>地址</label><input type="text" id="fAddr" placeholder="宜蘭縣..."></div>
-      <div class="field full"><label>簡介</label><textarea id="fBlurb" placeholder="這個地方是做什麼的、特色是什麼"></textarea></div>
+      <div class="field full"><label>簡介 <span class="hint">(可用 **文字** 加粗、!!文字!! 標紅)</span></label><textarea id="fBlurb" placeholder="這個地方是做什麼的、特色是什麼"></textarea></div>
       <div class="field"><label>價格</label><input type="text" id="fPrice" placeholder="例如：200元/人"></div>
       <div class="field"><label>預計可停留時間</label><input type="text" id="fTime" placeholder="例如：1小時、0.5–1小時"></div>
       <div class="field">
@@ -613,6 +614,13 @@ function renderHeader(){
 function escapeHtml(str){
   return (str||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
+function formatBlurb(str){
+  // 先完整跳脫HTML避免注入，再安全地把 **粗體** 跟 !!紅字!! 轉成標籤
+  let s = escapeHtml(str||'');
+  s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/!!(.+?)!!/g, '<span class="hl-red">$1</span>');
+  return s;
+}
 function voteCounts(id){
   const v = state.votes[id] || {};
   let yes=0, no=0, neutral=0;
@@ -683,7 +691,7 @@ function renderCards(){
       <div class="body">
         <h4>${escapeHtml(c.name)}</h4>
         <div class="addr">${escapeHtml(c.addr||'')}</div>
-        <div class="blurb">${escapeHtml(c.blurb||'')}</div>
+        <div class="blurb">${formatBlurb(c.blurb)}</div>
         <div class="chips">
           ${c.price ? `<span class="chip price">${escapeHtml(c.price)}</span>` : ''}
           ${c.time ? `<span class="chip time">預計可停留 ${escapeHtml(c.time)}</span>` : ''}
@@ -952,7 +960,7 @@ function renderStayCard(){
     : `<svg width="28" height="28"><use href="#ic-camera"/></svg>`;
   const links = [];
   if(s.stayMaps) links.push(`<a href="${escapeHtml(s.stayMaps)}" target="_blank" rel="noopener"><svg><use href="#ic-map"/></svg>Google地圖</a>`);
-  if(s.stayVideo) links.push(`<a href="${escapeHtml(s.stayVideo)}" target="_blank" rel="noopener"><svg><use href="#ic-play"/></svg>短影音</a>`);
+  if(s.stayVideo) links.push(`<a href="${escapeHtml(s.stayVideo)}" target="_blank" rel="noopener"><svg><use href="#ic-play"/></svg>官網</a>`);
   const dateChip = (s.start || s.end) ? `<span class="chip time">${fmtDate(s.start)}～${fmtDate(s.end)}</span>` : '';
   wrap.innerHTML = `
     <div class="spot" style="margin-bottom:24px;max-width:460px;">
@@ -960,7 +968,7 @@ function renderStayCard(){
       <div class="body">
         <h4>住宿：${escapeHtml(s.stayName || '未命名')}</h4>
         <div class="addr">${escapeHtml(s.stayAddr||'')}</div>
-        <div class="blurb">${escapeHtml(s.stayNote||'')}</div>
+        <div class="blurb">${formatBlurb(s.stayNote)}</div>
         <div class="chips">${dateChip}</div>
         ${links.length ? `<div class="links-row">${links.join('')}</div>` : ''}
       </div>
